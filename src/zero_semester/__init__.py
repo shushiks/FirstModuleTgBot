@@ -1,0 +1,1 @@
+"""Zero Semester application package."""
