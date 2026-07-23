@@ -12,16 +12,23 @@ router = APIRouter()
 async def go_to_lms(
     short_code: str,
     session: DbSession,
-    token: str | None = Query(default=None, alias="t"),
+    token: str = Query(alias="t", min_length=20, max_length=2048),
 ) -> RedirectResponse:
-    payload = verify_payload(token) if token else None
+    payload = verify_payload(token, expected_purpose="lms_click")
     user_id = payload.get("user_id") if payload else None
     module_id = payload.get("module_id") if payload else None
+    signed_short_code = payload.get("short_code") if payload else None
+    if (
+        not isinstance(user_id, int)
+        or not isinstance(module_id, int)
+        or signed_short_code != short_code
+    ):
+        raise HTTPException(status_code=404, detail="Ссылка не найдена")
     target_url = await track_lms_click(
         session,
         short_code=short_code,
-        user_id=user_id if isinstance(user_id, int) else None,
-        module_id=module_id if isinstance(module_id, int) else None,
+        user_id=user_id,
+        module_id=module_id,
     )
     if target_url is None:
         raise HTTPException(status_code=404, detail="Ссылка не найдена")

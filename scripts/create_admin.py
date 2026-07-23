@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import getpass
 
 from sqlalchemy import select
 
@@ -21,10 +22,15 @@ async def create_admin(username: str, password: str, role: AdminRole) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create an admin panel user")
     parser.add_argument("username")
-    parser.add_argument("password")
     parser.add_argument("--role", choices=list(AdminRole), default=AdminRole.ADMIN)
     args = parser.parse_args()
-    asyncio.run(create_admin(args.username, args.password, AdminRole(args.role)))
+    password = getpass.getpass("Пароль (минимум 12 символов): ")
+    confirmation = getpass.getpass("Повтори пароль: ")
+    if len(password) < 12:
+        raise SystemExit("Пароль должен содержать минимум 12 символов")
+    if password != confirmation:
+        raise SystemExit("Пароли не совпадают")
+    asyncio.run(create_admin(args.username, password, AdminRole(args.role)))
 
 
 if __name__ == "__main__":

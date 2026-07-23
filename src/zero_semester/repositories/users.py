@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,12 +22,28 @@ class UserRepository:
         )
         return user
 
-    async def create(self, telegram_id: int, time_login: str, school_id: int) -> User:
-        user = User(telegram_id=telegram_id, time_login=time_login, school_id=school_id)
+    async def create(
+        self,
+        telegram_id: int,
+        time_login: str,
+        school_id: int,
+        telegram_username: str | None = None,
+    ) -> User:
+        user = User(
+            telegram_id=telegram_id,
+            telegram_username=telegram_username,
+            time_login=time_login,
+            school_id=school_id,
+            last_activity_at=datetime.now(),
+        )
         self.session.add(user)
         await self.session.flush()
         return user
 
     async def set_school(self, user: User, school_id: int) -> None:
         user.school_id = school_id
+        await self.session.flush()
+
+    async def set_telegram_username(self, user: User, username: str | None) -> None:
+        user.telegram_username = username
         await self.session.flush()

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Вход — Нулевой семестр{% endblock %}
+{% block content %}
+<section class="card login-card">
+  <h1>Вход в админку</h1>
+  <p class="muted">Управление контентом Telegram-бота</p>
+  <form method="post" class="form-stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Логин<input name="username" autocomplete="username" required maxlength="100"></label>
+    <label>Пароль<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Войти</button>
+  </form>
+</section>
+{% endblock %}

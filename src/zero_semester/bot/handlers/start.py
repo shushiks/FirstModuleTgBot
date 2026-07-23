@@ -58,6 +58,7 @@ async def receive_school(callback: CallbackQuery, state: FSMContext) -> None:
             await register_user(
                 session,
                 telegram_id=callback.from_user.id,
+                telegram_username=callback.from_user.username,
                 time_login=str(data["time_login"]),
                 school_code=code,
             )

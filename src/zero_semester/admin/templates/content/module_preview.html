@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Предпросмотр — {{ module.title }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><a class="back-link" href="/content/modules/{{ module.id }}">← К редактору</a><h1>Предпросмотр</h1><p class="muted">Так содержимое модуля будет выглядеть в Telegram</p></div>
+  {% if module.status.value != "published" %}<form method="post" action="/content/modules/{{ module.id }}/publish"><button>Опубликовать</button></form>{% endif %}
+</div>
+<div class="phone-preview">
+  <div class="phone-preview__header"><strong>{{ school.name }}</strong><span>Предпросмотр цепочки сообщений</span></div>
+  <div class="telegram-chat">
+    <div class="preview-step"><span>1</span> Бот открывает модуль</div>
+    <article class="telegram-message telegram-message--text"><p><strong>{{ module.title }}</strong>{% if module.description %}<br><br>{{ module.description }}{% endif %}</p></article>
+
+    {% if intro_asset %}
+    <div class="preview-step"><span>2</span> Затем отправляет видео</div>
+    <article class="telegram-message"><video controls preload="metadata" src="/media/{{ intro_asset.id }}/file"></video></article>
+    {% endif %}
+
+    {% if cards %}
+    <div class="preview-step"><span>{% if intro_asset %}3{% else %}2{% endif %}</span> Карточки приходят одним альбомом</div>
+    <article class="telegram-message telegram-message--album">
+      <div class="telegram-album">
+        {% for card, post, asset in cards %}
+        <figure>
+          <img src="/media/{{ asset.id }}/file" alt="Карточка {{ card.position }}">
+          {% if card.caption %}<figcaption>{{ card.caption }}</figcaption>{% endif %}
+        </figure>
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
+
+    <div class="preview-step"><span>{% if intro_asset and cards %}4{% elif intro_asset or cards %}3{% else %}2{% endif %}</span> После материалов появляются действия</div>
+    <article class="telegram-message telegram-message--text">
+      <p>Материалы модуля открыты.</p>
+      {% if lms_course %}<span class="telegram-button">{{ module_lms.button_text }}</span>{% endif %}
+      {% if practice %}<span class="telegram-button">{{ {"quiz": "Пройти квиз", "open_question": "Ответить на вопрос", "poll": "Пройти опрос"}[practice.practice_type.value] }}</span>{% endif %}
+      <span class="telegram-button">← В меню</span>
+    </article>
+
+    {% if practice %}
+    <div class="preview-transition">После нажатия «{{ {"quiz": "Пройти квиз", "open_question": "Ответить на вопрос", "poll": "Пройти опрос"}[practice.practice_type.value] }}»</div>
+    <article class="telegram-message telegram-message--text{% if practice.practice_type.value == 'poll' %} telegram-native-poll{% endif %}">
+      <p><strong>{{ {"quiz": "Квиз", "open_question": "Открытый вопрос", "poll": "Опрос Telegram"}[practice.practice_type.value] }}</strong><br><br>{{ practice.question }}</p>
+      {% if practice.practice_type.value == "open_question" %}
+      <span class="telegram-input">Пользователь отправляет ответ сообщением…</span>
+      {% elif practice.practice_type.value == "poll" %}
+      {% for option in options %}<span class="telegram-poll-option"><i></i>{{ option.text }}</span>{% endfor %}
+      <small>Результаты обновляются автоматически средствами Telegram</small>
+      {% else %}
+      {% for option in options %}<span class="telegram-button">{{ option.text }}</span>{% endfor %}
+      {% endif %}
+    </article>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

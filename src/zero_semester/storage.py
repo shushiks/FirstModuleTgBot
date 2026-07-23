@@ -21,5 +21,8 @@ class LocalMediaStorage:
     def read(self, relative_path: str) -> bytes:
         return (self.root / relative_path).read_bytes()
 
+    def resolve(self, relative_path: str) -> Path:
+        return self.root / relative_path
+
     def delete(self, relative_path: str) -> None:
         (self.root / relative_path).unlink(missing_ok=True)

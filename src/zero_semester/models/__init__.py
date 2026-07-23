@@ -27,6 +27,7 @@ from zero_semester.models.progress import (
     PracticeAttempt,
     QuizAnswer,
     SecretKeyRedemption,
+    TelegramPoll,
 )
 from zero_semester.models.users import AdminUser, AuditLog, User
 
@@ -57,5 +58,6 @@ __all__ = [
     "SecretKeyRedemption",
     "SupportMessage",
     "SupportTicket",
+    "TelegramPoll",
     "User",
 ]

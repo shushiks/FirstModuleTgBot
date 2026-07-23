@@ -1,19 +1,44 @@
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request
 from sqlalchemy import func, select
+from starlette.responses import Response
 
 from zero_semester.admin.deps import CurrentAdmin, DbSession
-from zero_semester.models import Module, User
+from zero_semester.admin.templating import render_template
+from zero_semester.models import Broadcast, Module, SupportTicket, User
+from zero_semester.models.enums import BroadcastStatus, PublicationStatus, TicketStatus
 
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
-async def dashboard(session: DbSession, admin: CurrentAdmin) -> str:
-    users_count = await session.scalar(select(func.count()).select_from(User)) or 0
-    modules_count = await session.scalar(select(func.count()).select_from(Module)) or 0
-    return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
-<title>Админка</title></head><body><main><h1>Нулевой семестр</h1>
-<p>Администратор: {admin.username}</p><p>Пользователей: {users_count}</p>
-<p>Модулей: {modules_count}</p><form method="post" action="/logout">
-<button>Выйти</button></form></main></body></html>"""
+@router.get("/")
+async def dashboard(request: Request, session: DbSession, admin: CurrentAdmin) -> Response:
+    metrics = {
+        "users": await session.scalar(select(func.count()).select_from(User)) or 0,
+        "draft_modules": await session.scalar(
+            select(func.count()).select_from(Module).where(
+                Module.status == PublicationStatus.DRAFT
+            )
+        )
+        or 0,
+        "open_tickets": await session.scalar(
+            select(func.count()).select_from(SupportTicket).where(
+                SupportTicket.status != TicketStatus.CLOSED
+            )
+        )
+        or 0,
+        "draft_broadcasts": await session.scalar(
+            select(func.count()).select_from(Broadcast).where(
+                Broadcast.status == BroadcastStatus.DRAFT
+            )
+        )
+        or 0,
+    }
+    return render_template(
+        request,
+        "dashboard.html",
+        {
+            "admin": admin,
+            "metrics": metrics,
+            "forbidden": request.query_params.get("forbidden") == "1",
+        },
+    )

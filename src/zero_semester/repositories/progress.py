@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,3 +35,24 @@ class ProgressRepository:
         self.session.add(redemption)
         await self.session.flush()
         return redemption
+
+    async def mark_module_started(self, user_id: int, module_id: int) -> None:
+        progress = await self.session.scalar(
+            select(ModuleProgress).where(
+                ModuleProgress.user_id == user_id,
+                ModuleProgress.module_id == module_id,
+            )
+        )
+        if progress is None:
+            self.session.add(
+                ModuleProgress(
+                    user_id=user_id,
+                    module_id=module_id,
+                    status=ProgressStatus.IN_PROGRESS,
+                    started_at=datetime.now(),
+                )
+            )
+        elif progress.status == ProgressStatus.NOT_STARTED:
+            progress.status = ProgressStatus.IN_PROGRESS
+            progress.started_at = progress.started_at or datetime.now()
+        await self.session.flush()

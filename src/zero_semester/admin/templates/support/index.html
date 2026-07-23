@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Поддержка — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Поддержка</h1><p class="muted">Обращения пользователей</p></div></div>
+<section class="metrics"><article class="metric"><span>Новые</span><strong>{{ metrics.new }}</strong></article><article class="metric"><span>В работе</span><strong>{{ metrics.in_progress }}</strong></article><article class="metric"><span>Закрытые</span><strong>{{ metrics.closed }}</strong></article></section>
+<section class="card analytics-events"><div class="table-wrap"><table><thead><tr><th>Обращение</th><th>Пользователь</th><th>Статус</th><th>Сообщений</th><th></th></tr></thead><tbody>
+{% for ticket, telegram_id, telegram_username, time_login, messages_count in rows %}<tr><td>#{{ ticket.id }}<small>{{ ticket.created_at }}</small></td><td>{{ time_login }}<small>{% if telegram_username %}@{{ telegram_username }}{% else %}ID: {{ telegram_id }}{% endif %}</small></td><td><span class="badge">{{ {"new":"Новое","in_progress":"В работе","closed":"Закрыто"}[ticket.status.value] }}</span></td><td>{{ messages_count }}</td><td><a class="button button--ghost" href="/support/{{ ticket.id }}">Открыть</a></td></tr>{% else %}<tr><td colspan="5">Обращений пока нет</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from zero_semester.models.base import Base, TimestampMixin
@@ -62,6 +62,17 @@ class SecretKeyRedemption(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     secret_key_id: Mapped[int] = mapped_column(ForeignKey("secret_keys.id"))
+
+
+class TelegramPoll(TimestampMixin, Base):
+    __tablename__ = "telegram_polls"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    telegram_poll_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    practice_id: Mapped[int] = mapped_column(
+        ForeignKey("practices.id", ondelete="CASCADE")
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
 
 class CourseCompletion(TimestampMixin, Base):

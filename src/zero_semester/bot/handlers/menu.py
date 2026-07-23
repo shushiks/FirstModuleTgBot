@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -21,7 +22,11 @@ async def menu_command(message: Message, state: FSMContext) -> None:
 async def main_menu(callback: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     if isinstance(callback.message, Message):
-        await callback.message.edit_text("Главное меню", reply_markup=main_menu_keyboard())
+        try:
+            await callback.message.edit_text("Главное меню", reply_markup=main_menu_keyboard())
+        except TelegramBadRequest:
+            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.answer("Главное меню", reply_markup=main_menu_keyboard())
     await callback.answer()
 
 
@@ -33,6 +38,7 @@ async def module_menu(callback: CallbackQuery) -> None:
             await callback.answer("Сначала выполни /start", show_alert=True)
             return
         items = await get_module_menu(session, user_id=user.id, school_id=user.school_id)
+        await session.commit()
     if isinstance(callback.message, Message):
         text = "Выбери модуль" if items else "Опубликованных модулей пока нет."
         await callback.message.edit_text(text, reply_markup=modules_keyboard(items))

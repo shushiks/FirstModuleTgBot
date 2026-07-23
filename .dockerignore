@@ -9,3 +9,5 @@ __pycache__
 *.pyc
 media
 tests
+.DS_Store
+**/.DS_Store

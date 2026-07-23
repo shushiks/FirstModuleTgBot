@@ -1,55 +1,81 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import select
+from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
+from pydantic import ValidationError
 from starlette.responses import Response
 
-from zero_semester.admin.deps import DbSession
-from zero_semester.models import AdminUser
-from zero_semester.security import sign_payload, verify_password
+from zero_semester.admin.auth import authenticate_admin
+from zero_semester.admin.deps import CurrentAdmin, DbSession
+from zero_semester.admin.forms import LoginForm
+from zero_semester.admin.templating import render_template
+from zero_semester.config import get_settings
+from zero_semester.security import csrf_tokens_match, new_csrf_token, sign_payload
 
 router = APIRouter()
 
 
-def login_page(error: str | None = None) -> str:
-    error_html = f'<p class="error">{error}</p>' if error else ""
-    return f"""<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><title>Вход</title></head>
-<body><main><h1>Нулевой семестр</h1>{error_html}
-<form method="post"><label>Логин <input name="username" required></label><br>
-<label>Пароль <input name="password" type="password" required></label><br>
-<button type="submit">Войти</button></form></main></body></html>"""
-
-
-@router.get("/login", response_class=HTMLResponse)
-async def get_login() -> str:
-    return login_page()
+@router.get("/login")
+async def get_login(request: Request) -> Response:
+    return render_template(request, "login.html")
 
 
 @router.post("/login")
 async def post_login(
     request: Request,
     session: DbSession,
-    username: Annotated[str, Form()],
-    password: Annotated[str, Form()],
 ) -> Response:
-    admin = await session.scalar(select(AdminUser).where(AdminUser.username == username.strip()))
-    if admin is None or not admin.is_active or not verify_password(admin.password_hash, password):
-        return HTMLResponse(login_page("Неверный логин или пароль"), status_code=400)
+    try:
+        raw_form = dict(await request.form())
+        raw_csrf_token = raw_form.get("csrf_token")
+        if not csrf_tokens_match(
+            request.cookies.get("csrf_token"),
+            raw_csrf_token if isinstance(raw_csrf_token, str) else None,
+        ):
+            return render_template(
+                request,
+                "login.html",
+                {"error": "Форма устарела. Обнови страницу и повтори вход"},
+                status_code=403,
+            )
+        form = LoginForm.model_validate(raw_form)
+    except ValidationError:
+        return render_template(
+            request, "login.html", {"error": "Заполни логин и пароль"}, status_code=400
+        )
+    admin = await authenticate_admin(session, username=form.username, password=form.password)
+    if admin is None:
+        return render_template(
+            request, "login.html", {"error": "Неверный логин или пароль"}, status_code=400
+        )
     response = RedirectResponse("/", status_code=303)
+    settings = get_settings()
+    is_secure = settings.app_env not in {"local", "test"} or request.url.scheme == "https"
     response.set_cookie(
         "admin_session",
-        sign_payload({"admin_id": admin.id}),
+        sign_payload(
+            {"admin_id": admin.id},
+            purpose="admin_session",
+            ttl_seconds=12 * 60 * 60,
+        ),
         httponly=True,
-        samesite="lax",
-        secure=request.url.scheme == "https",
+        samesite="strict",
+        secure=is_secure,
+        max_age=12 * 60 * 60,
+    )
+    csrf_token = new_csrf_token()
+    response.set_cookie(
+        "csrf_token",
+        csrf_token,
+        httponly=True,
+        samesite="strict",
+        secure=is_secure,
+        max_age=12 * 60 * 60,
     )
     return response
 
 
 @router.post("/logout")
-async def logout() -> RedirectResponse:
+async def logout(_admin: CurrentAdmin) -> RedirectResponse:
     response = RedirectResponse("/login", status_code=303)
     response.delete_cookie("admin_session")
+    response.delete_cookie("csrf_token")
     return response

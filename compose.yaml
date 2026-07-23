@@ -15,36 +15,61 @@ services:
 
   admin:
     build: .
-    env_file: ${ENV_FILE:-.env.example}
+    env_file: ${ENV_FILE:-.env}
     command: uvicorn zero_semester.admin.main:app --host 0.0.0.0 --port 8000
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - media_data:/data/media
+      - logs_data:/data/logs
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   bot:
     build: .
-    env_file: ${ENV_FILE:-.env.example}
+    env_file: ${ENV_FILE:-.env}
     command: python -m zero_semester.bot.main
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - media_data:/data/media
+      - logs_data:/data/logs
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   worker:
     build: .
-    env_file: ${ENV_FILE:-.env.example}
+    env_file: ${ENV_FILE:-.env}
     command: python -m zero_semester.worker.main
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - media_data:/data/media
+      - logs_data:/data/logs
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   postgres_data:
   media_data:
+  logs_data:

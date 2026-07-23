@@ -26,11 +26,15 @@ class ContentRepository:
         )
         return list((await self.session.scalars(statement)).all())
 
-    async def get_secret_key(self, normalized_value: str) -> SecretKey | None:
+    async def get_secret_key(self, key_digest: str, *, school_id: int) -> SecretKey | None:
         secret_key: SecretKey | None = await self.session.scalar(
-            select(SecretKey).where(
-                SecretKey.normalized_value == normalized_value,
+            select(SecretKey)
+            .join(LmsCourse, LmsCourse.id == SecretKey.lms_course_id)
+            .where(
+                SecretKey.key_digest == key_digest,
                 SecretKey.is_active.is_(True),
+                LmsCourse.is_active.is_(True),
+                LmsCourse.school_id == school_id,
             )
         )
         return secret_key

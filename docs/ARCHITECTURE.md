@@ -149,7 +149,11 @@ flowchart LR
 
 Activation rate считается как количество зарегистрированных пользователей, дошедших до практики первого модуля, деленное на общее количество зарегистрированных пользователей. Это только метрика и не ограничивает свободный порядок модулей.
 
-## 6. Реальная структура файлов
+## 6. Структура файлов
+
+Дерево ниже отражает фактически созданные файлы. Описанные выше бизнес-сценарии —
+целевая архитектура проекта; текущая степень их реализации отдельно зафиксирована в
+разделе 11, чтобы наличие файла-каркаса не выглядело как готовый функционал.
 
 ```text
 FirstModuleTgBot/
@@ -179,9 +183,12 @@ FirstModuleTgBot/
 │       │   ├── deps.py
 │       │   ├── auth.py
 │       │   ├── forms.py
+│       │   ├── templating.py
 │       │   ├── routes/
+│       │   │   ├── auth.py
 │       │   │   ├── dashboard.py
 │       │   │   ├── content.py
+│       │   │   ├── keys.py
 │       │   │   ├── media.py
 │       │   │   ├── users.py
 │       │   │   ├── support.py
@@ -193,6 +200,9 @@ FirstModuleTgBot/
 │       │   │   ├── login.html
 │       │   │   ├── dashboard.html
 │       │   │   ├── content/
+│       │   │   ├── keys/
+│       │   │   ├── media/
+│       │   │   ├── users/
 │       │   │   ├── support/
 │       │   │   ├── broadcasts/
 │       │   │   └── analytics/
@@ -202,28 +212,24 @@ FirstModuleTgBot/
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── base.py
+│       │   ├── enums.py
 │       │   ├── users.py
 │       │   ├── content.py
 │       │   ├── progress.py
-│       │   ├── support.py
 │       │   └── operations.py
 │       ├── repositories/
 │       │   ├── users.py
 │       │   ├── content.py
 │       │   ├── progress.py
-│       │   ├── support.py
-│       │   └── operations.py
+│       │   └── events.py
 │       ├── services/
 │       │   ├── registration.py
 │       │   ├── course.py
+│       │   ├── lms_links.py
 │       │   ├── practice.py
 │       │   ├── secrets.py
 │       │   ├── support.py
-│       │   ├── content.py
-│       │   ├── media.py
-│       │   ├── broadcasts.py
-│       │   ├── analytics.py
-│       │   └── reports.py
+│       │   └── broadcasts.py
 │       └── worker/
 │           ├── __init__.py
 │           ├── main.py                 # точка входа worker
@@ -240,7 +246,9 @@ FirstModuleTgBot/
 │   ├── test_secret_keys.py
 │   ├── test_support.py
 │   ├── test_broadcasts.py
-│   └── test_admin.py
+│   ├── test_admin.py
+│   ├── test_security.py
+│   └── test_storage.py
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── DATABASE.md
@@ -259,7 +267,7 @@ FirstModuleTgBot/
 ├── Makefile
 ├── pyproject.toml
 ├── uv.lock
-└── README.md
+└── Readme.md
 ```
 
 ## 7. Зачем нужен каждый слой
@@ -288,7 +296,8 @@ FirstModuleTgBot/
 
 - `start.py` — `/start`, Time login и школа;
 - `menu.py` — `/menu`;
-- `modules.py` — открытие модуля и листание карточек;
+- `modules.py` — открытие опубликованного модуля, последовательная выдача карточек,
+  затем переход в LMS и к практике;
 - `practices.py` — квиз и открытый вопрос;
 - `secrets.py` — `/secret`;
 - `support.py` — `/help`.
@@ -314,11 +323,13 @@ FirstModuleTgBot/
 
 ### Worker
 
-`worker/tasks.py` на старте содержит три фоновые функции: рассылка, напоминание по неактивности и формирование PDF. Создавать три отдельных файла пока нет смысла.
+Сейчас `worker/tasks.py` содержит отправку запланированных рассылок. Напоминания по
+неактивности и формирование PDF будут добавлены отдельными задачами; после этого их
+можно разнести по файлам, если модуль станет слишком большим.
 
 ### Медиа
 
-`storage.py` сохраняет и читает оригиналы контента в `/data/media`. `services/media.py` загружает их в Telegram и кэширует полученные `file_id` в PostgreSQL. Карточки и кружки поэтому можно повторно отправить даже при проблеме с Telegram `file_id`.
+`storage.py` сохраняет и читает оригиналы контента в `/data/media`. `bot/senders.py` отправляет их в Telegram, использует сохраненные `file_id` и делает fallback кружка в обычное видео. Карточки и кружки поэтому можно повторно отправить даже при проблеме с Telegram `file_id`.
 
 Скриншоты поддержки в media volume не попадают: бот просто копирует сообщение пользователя в закрытую группу поддержки.
 
@@ -335,7 +346,7 @@ FirstModuleTgBot/
 - `.gitignore` — исключает секреты, кэш, окружение и генерируемые файлы из Git.
 - `Makefile` — команды `make run`, `make test`, `make lint`, `make migrate`.
 - `.gitlab-ci.yml` — проверки, сборка и деплой.
-- `README.md` — инструкция запуска.
+- `Readme.md` — инструкция запуска.
 
 Зависимости: `aiogram`, `FastAPI`, `uvicorn`, `SQLAlchemy 2`, `asyncpg`, `Alembic`, `Pydantic Settings`, `Jinja2`, `python-multipart`, `argon2-cffi`, `structlog`, `openpyxl`, библиотека PDF, `pytest`, `ruff`, `mypy`.
 
@@ -355,5 +366,20 @@ FirstModuleTgBot/
 - polling для Telegram-бота.
 
 Polling означает, что бот сам регулярно спрашивает Telegram о новых сообщениях. Webhook означает, что Telegram сам вызывает HTTPS endpoint сервера. Для текущего Compose-деплоя используем polling.
+
+## 11. Статус реализации
+
+Уже реализован и проверен базовый вертикальный срез: миграции и модели БД,
+регистрация, выбор школы, меню модулей, последовательная выдача карточек,
+секретные ключи, LMS-ссылки, квиз и открытый вопрос, обращение в поддержку,
+немедленные и запланированные рассылки, авторизация администратора, редактор модуля,
+загрузка карточек, настройка практики/LMS/ключей, preview, publish/archive и единая
+страница статистики с CSV-выгрузками пользователей и событий для Google Sheets.
+
+Ещё не считаются готовым продуктовым функционалом: drag-and-drop порядка карточек,
+полное версионирование с rollback опубликованного контента, ответ поддержки из
+админки, итоговый PDF, автоматические рассылки по неактивности, расширенная аналитика
+и экспорт. Эти части нельзя считать реализованными только потому, что таблицы для
+части данных уже существуют.
 
 Миграции запускаются отдельной командой перед обновлением контейнеров. Секреты передаются через окружение и не коммитятся.

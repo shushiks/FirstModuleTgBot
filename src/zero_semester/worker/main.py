@@ -5,6 +5,7 @@ from aiogram import Bot
 
 from zero_semester.config import get_settings
 from zero_semester.database import session_factory
+from zero_semester.logging_config import configure_logging
 from zero_semester.worker.tasks import send_due_broadcasts
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ async def run() -> None:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    configure_logging("worker")
     asyncio.run(run())
 
 

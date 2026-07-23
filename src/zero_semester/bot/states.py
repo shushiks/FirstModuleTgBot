@@ -12,3 +12,7 @@ class SecretStates(StatesGroup):
 
 class SupportStates(StatesGroup):
     waiting_for_message = State()
+
+
+class PracticeStates(StatesGroup):
+    waiting_for_open_answer = State()

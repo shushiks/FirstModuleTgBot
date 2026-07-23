@@ -17,6 +17,7 @@ class User(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger)
+    telegram_username: Mapped[str | None] = mapped_column(String(32), index=True)
     time_login: Mapped[str] = mapped_column(String(128))
     school_id: Mapped[int] = mapped_column(ForeignKey("schools.id"))
     last_activity_at: Mapped[datetime | None]

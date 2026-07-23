@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Нулевой семестр{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/admin.css') }}">
+  <script defer src="{{ url_for('static', path='/admin.js') }}"></script>
+</head>
+<body>
+  {% if admin %}
+  <header class="topbar">
+    <a class="brand" href="/">Нулевой семестр</a>
+    <nav>
+      {% if admin.role.value in ["admin", "content_manager"] %}
+      <a href="/content">Контент</a>
+      <a href="/keys">Ключи</a>
+      {% endif %}
+      <a href="/users">Пользователи</a>
+      {% if admin.role.value in ["admin", "support"] %}
+      <a href="/support">Поддержка</a>
+      {% endif %}
+      {% if admin.role.value in ["admin", "content_manager"] %}
+      <a href="/broadcasts">Рассылки</a>
+      <a href="/analytics">Статистика</a>
+      {% endif %}
+      {% if admin.role.value == "admin" %}<a href="/admins">Администраторы</a>{% endif %}
+    </nav>
+    <form method="post" action="/logout"><button class="link-button">Выйти</button></form>
+  </header>
+  {% endif %}
+  <main class="container {% if not admin %}container--narrow{% endif %}">
+    {% if error %}<div class="alert alert--error">{{ error }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

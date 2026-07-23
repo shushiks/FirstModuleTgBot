@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Секретные ключи — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Секретные ключи</h1><p class="muted">Ключ всегда привязан к конкретному LMS-курсу и модулю</p></div></div>
+<section class="card">
+  <h2>Добавить или активировать ключ</h2>
+  {% if courses %}
+  <form method="post" class="form-grid">
+    <label>LMS-курс и модуль<select name="lms_course_id" required>{% for course, school, module in courses %}<option value="{{ course.id }}">{{ school.name }} · {{ module.title if module else "Без модуля" }} · {{ course.name }}</option>{% endfor %}</select></label>
+    <label>Название ключа<input name="label" required maxlength="120" placeholder="Например: Ключ на август 2026"></label>
+    <label>Ключ<input name="value" required maxlength="255" placeholder="Фраза из LMS"></label>
+    <button>Сохранить ключ</button>
+  </form>
+  {% else %}<div class="empty-state">Сначала открой модуль и заполни блок «LMS и секретный ключ».</div>{% endif %}
+</section>
+<section class="card">
+  <h2>Все ключи</h2>
+  <div class="table-wrap"><table><thead><tr><th>Название</th><th>Школа</th><th>Модуль</th><th>LMS-курс</th><th>Создан</th><th>Статус</th><th></th></tr></thead><tbody>
+  {% for key, course, school, module in keys %}<tr><td><strong>{{ key.label }}</strong><br><span class="muted">Фраза скрыта</span></td><td>{{ school.name }}</td><td>{{ module.title if module else "—" }}</td><td>{{ course.name }}</td><td>{{ key.created_at.strftime("%d.%m.%Y %H:%M") }}</td><td><span class="badge">{{ "Активен" if key.is_active else "Выключен" }}</span></td><td><form method="post" action="/keys/{{ key.id }}/toggle"><button class="button button--ghost">{{ "Выключить" if key.is_active else "Включить" }}</button></form></td></tr>{% else %}<tr><td colspan="7">Ключей пока нет</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

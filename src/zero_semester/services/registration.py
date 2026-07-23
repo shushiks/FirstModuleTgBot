@@ -32,6 +32,7 @@ async def register_user(
     session: AsyncSession,
     *,
     telegram_id: int,
+    telegram_username: str | None,
     time_login: str,
     school_code: SchoolCode,
 ) -> User:
@@ -50,7 +51,12 @@ async def register_user(
     if school is None:
         raise RegistrationError("Выбранная школа не настроена")
 
-    user = await users.create(telegram_id, normalized_login, school.id)
+    user = await users.create(
+        telegram_id,
+        normalized_login,
+        school.id,
+        telegram_username=telegram_username,
+    )
     await EventRepository(session).add(
         "registration_completed", user_id=user.id, school_id=school.id
     )

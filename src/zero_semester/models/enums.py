@@ -21,6 +21,7 @@ class ProgressStatus(StrEnum):
 class PracticeType(StrEnum):
     QUIZ = "quiz"
     OPEN_QUESTION = "open_question"
+    POLL = "poll"
 
 
 class AdminRole(StrEnum):

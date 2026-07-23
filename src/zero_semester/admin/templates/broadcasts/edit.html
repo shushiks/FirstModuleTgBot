@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Редактирование рассылки — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><a class="back-link" href="/broadcasts">← К рассылкам</a><h1>Редактирование черновика</h1></div></div>
+<section class="card"><form method="post" class="form-grid">
+  <label>Название<input name="title" required maxlength="200" value="{{ broadcast.title }}"></label>
+  <label>Школа<select name="school_id"><option value="">Все пользователи</option>{% for school in schools %}<option value="{{ school.id }}" {% if school.id == broadcast.school_id %}selected{% endif %}>{{ school.name }}</option>{% endfor %}</select></label>
+  <label class="form-grid__wide">Текст<textarea name="text" required maxlength="4096">{{ broadcast.text }}</textarea></label>
+  <label>Дата и время<input name="scheduled_at" type="datetime-local"></label>
+  <label>Текст кнопки<input name="button_text" value="{{ broadcast.button_text or '' }}"></label>
+  <label class="form-grid__wide">Ссылка кнопки<input name="button_url" type="url" value="{{ broadcast.button_url or '' }}"></label>
+  <div class="form-actions form-grid__wide"><button name="action" value="send_now">Отправить сейчас</button><button name="action" value="schedule" class="button--ghost">Запланировать</button><button name="action" value="draft" class="button--ghost">Сохранить черновик</button></div>
+</form></section>
+{% endblock %}

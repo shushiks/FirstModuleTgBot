@@ -43,6 +43,19 @@ async def receive_secret(message: Message, state: FSMContext) -> None:
     if not result.accepted:
         await message.answer("Неверный ключ.", reply_markup=main_menu_keyboard())
     elif result.already_used:
-        await message.answer("Этот ключ уже был засчитан.", reply_markup=main_menu_keyboard())
+        text = "Эта практика в LMS уже была засчитана."
+        if result.module_completed:
+            text += " Все условия модуля выполнены — в меню стоит ✅."
+        else:
+            text += " Для галочки осталось выполнить практику в боте."
+        await message.answer(text, reply_markup=main_menu_keyboard())
     else:
-        await message.answer("Курс LMS засчитан!", reply_markup=main_menu_keyboard())
+        text = "Практика в LMS засчитана."
+        if result.module_completed:
+            text += " Все условия модуля выполнены — в меню появилась ✅."
+        else:
+            text += " Для галочки осталось выполнить практику в боте."
+        await message.answer(text, reply_markup=main_menu_keyboard())
+        if result.reflection_report:
+            for start in range(0, len(result.reflection_report), 4000):
+                await message.answer(result.reflection_report[start : start + 4000])

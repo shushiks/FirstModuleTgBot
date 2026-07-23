@@ -6,10 +6,12 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -119,6 +121,7 @@ class QuizOption(TimestampMixin, Base):
     text: Mapped[str] = mapped_column(Text)
     position: Mapped[int] = mapped_column(Integer)
     is_correct: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
 
 class LmsCourse(TimestampMixin, Base):
@@ -144,10 +147,19 @@ class ModuleLmsCourse(Base):
 
 class SecretKey(TimestampMixin, Base):
     __tablename__ = "secret_keys"
+    __table_args__ = (
+        Index(
+            "uq_secret_keys_one_active_per_course",
+            "lms_course_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     lms_course_id: Mapped[int] = mapped_column(ForeignKey("lms_courses.id"))
-    normalized_value: Mapped[str] = mapped_column(String(255), unique=True)
+    key_digest: Mapped[str] = mapped_column(String(64), unique=True)
+    label: Mapped[str] = mapped_column(String(120))
     valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
