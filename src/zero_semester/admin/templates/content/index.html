@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Контент — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Модули</h1><p class="muted">Создай модуль, наполни его карточками и практикой, проверь и опубликуй</p></div>
+</div>
+
+{% if schools %}
+<nav class="school-tabs" aria-label="Школы">
+  {% for school in schools %}
+  <a class="school-tab{% if active_school and active_school.id == school.id %} school-tab--active{% endif %}" href="/content?school_id={{ school.id }}">{{ school.name }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+{% if active_school %}
+<section class="card">
+  <h2>Создать модуль — {{ active_school.name }}</h2>
+  <form method="post" action="/content/modules" class="form-grid">
+    <input type="hidden" name="school_id" value="{{ active_school.id }}">
+    <label>Название<input name="title" required maxlength="200" placeholder="Название модуля"></label>
+    <label class="form-grid__wide">Краткое описание<textarea name="description" rows="2" placeholder="Что пользователь узнает в модуле"></textarea></label>
+    <label class="checkbox"><input name="is_required" type="checkbox" checked> Обязательный модуль</label>
+    <button>Создать и наполнить</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Модули: {{ active_school.name }}</h2>
+  <div class="module-list">
+    {% for module, course_run, school in module_rows %}
+    <article class="module-row">
+      <div class="module-row__position">{{ module.position }}</div>
+      <div class="module-row__body">
+        <strong>{{ module.title }}</strong>
+        <span>{{ module.description or "Описание пока не заполнено" }}</span>
+      </div>
+      <span class="badge badge--{{ module.status.value }}">{{ {"draft": "Черновик", "published": "Опубликован", "archived": "Архив"}[module.status.value] }}</span>
+      <div class="module-row__actions">
+        <a class="button button--ghost" href="/content/modules/{{ module.id }}/preview">Предпросмотр</a>
+        <a class="button" href="/content/modules/{{ module.id }}">Редактировать</a>
+      </div>
+    </article>
+    {% else %}
+    <p class="muted">Модулей пока нет.</p>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<section class="card"><div class="empty-state">Сначала добавь школы в базу данных.</div></section>
+{% endif %}
+{% endblock %}

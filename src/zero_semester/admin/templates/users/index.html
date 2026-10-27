@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Пользователи — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Пользователи</h1><p class="muted">Поиск и управление школой пользователя</p></div></div>
+{% if school_updated %}<div class="alert alert--success">Школа пользователя изменена. Прогресс в прежней школе сохранён.</div>{% endif %}
+<section class="card">
+  <form method="get" action="/users" class="search-form">
+    <input name="q" value="{{ query }}" maxlength="128" placeholder="Time login или Telegram ID" aria-label="Поиск пользователей">
+    <button type="submit">Найти</button>
+    {% if query %}<a class="button button--ghost" href="/users">Сбросить</a>{% endif %}
+  </form>
+</section>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Telegram</th><th>Time login</th><th>Школа</th><th>Последняя активность</th><th>Регистрация</th></tr></thead><tbody>
+{% for user, school_name in rows %}{% set telegram = telegram_profiles[user.telegram_id] %}<tr><td><a class="telegram-user" href="{{ telegram.url }}">{{ telegram.label }}</a><small>ID: {{ user.telegram_id }}</small></td><td>{{ user.time_login }}</td><td>
+  {% if admin.role.value in ["admin", "content_manager"] %}
+  <form method="post" action="/users/{{ user.id }}/school" class="inline-form school-form">
+    <input type="hidden" name="return_query" value="{{ query }}">
+    <select name="school_id" aria-label="Школа пользователя {{ user.time_login }}">
+      {% for school in schools %}<option value="{{ school.id }}" {% if school.id == user.school_id %}selected{% endif %}>{{ school.name }}</option>{% endfor %}
+    </select>
+    <button type="submit">Сменить</button>
+  </form>
+  {% else %}<span class="school-label">{{ school_name }}</span>{% endif %}
+</td><td>{{ user.last_activity_at or "Ещё не взаимодействовал" }}</td><td>{{ user.created_at }}</td></tr>{% else %}<tr><td colspan="5">{% if query %}Ничего не найдено{% else %}Пользователей пока нет{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

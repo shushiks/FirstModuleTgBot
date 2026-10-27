@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Главная — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Панель управления</h1><p class="muted">Контент, пользователи, поддержка и рассылки в одном месте</p></div></div>
+{% if forbidden %}<div class="alert alert--error">У этой учётной записи нет доступа к выбранному разделу.</div>{% endif %}
+<section class="metrics">
+  <a class="metric" href="/users"><span>Пользователи</span><strong>{{ metrics.users }}</strong></a>
+  {% if admin.role.value in ["admin", "content_manager"] %}
+  <a class="metric" href="/content"><span>Черновики модулей</span><strong>{{ metrics.draft_modules }}</strong></a>
+  {% endif %}
+  {% if admin.role.value in ["admin", "support"] %}
+  <a class="metric" href="/support"><span>Открытые обращения</span><strong>{{ metrics.open_tickets }}</strong></a>
+  {% endif %}
+  {% if admin.role.value in ["admin", "content_manager"] %}
+  <a class="metric" href="/broadcasts"><span>Черновики рассылок</span><strong>{{ metrics.draft_broadcasts }}</strong></a>
+  {% endif %}
+</section>
+{% if admin.role.value in ["admin", "content_manager"] %}
+<section class="grid-2 analytics-events">
+  <article class="card"><h2>Что означает «Черновик»</h2><p class="muted">Изменения сохранены в админке, но пользователи их ещё не видят. После проверки открой предпросмотр и нажми «Опубликовать».</p></article>
+  <article class="card"><h2>Быстрые действия</h2><div class="form-actions"><a class="button" href="/content">Добавить модуль</a><a class="button button--ghost" href="/broadcasts">Создать рассылку</a>{% if admin.role.value == "admin" %}<a class="button button--ghost" href="/admins">Добавить администратора</a>{% endif %}</div></article>
+</section>
+{% else %}
+<section class="card analytics-events support-home-card">
+  <div><h2>Поддержка</h2><p class="muted">Открой обращения, ответь пользователю и закрой диалог после решения вопроса.</p></div>
+  <a class="button" href="/support">Открыть обращения</a>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ module.title }} — редактор{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <a class="back-link" href="/content">← Все модули</a>
+    <h1>{{ module.title }}</h1>
+    <p class="muted">{{ school.name }} · <span class="badge badge--{{ module.status.value }}">{{ {"draft":"Черновик","published":"Опубликован","archived":"Архив"}[module.status.value] }}</span></p>
+  </div>
+  <div class="heading-actions">
+    <a class="button button--ghost" href="/content/modules/{{ module.id }}/preview">Предпросмотр</a>
+    {% if module.status.value != "published" %}<form method="post" action="/content/modules/{{ module.id }}/publish"><button>Опубликовать</button></form>{% endif %}
+  </div>
+</div>
+
+<section class="editor-section card" id="main">
+  <div class="editor-section__title"><span>01</span><div><h2>Основное</h2><p class="muted">Название и описание модуля в меню бота</p></div></div>
+  <form method="post" action="/content/modules/{{ module.id }}/details" class="form-grid">
+    <label>Название<input name="title" required value="{{ module.title }}"></label>
+    <label class="form-grid__wide">Описание<textarea name="description">{{ module.description or "" }}</textarea></label>
+    <label class="checkbox"><input name="is_required" type="checkbox" {% if module.is_required %}checked{% endif %}> Обязательный модуль</label>
+    <button>Сохранить основное</button>
+  </form>
+</section>
+
+<section class="editor-section card" id="video">
+  <div class="editor-section__title"><span>02</span><div><h2>Видео</h2><p class="muted">Одно обычное видео в начале модуля; при новой загрузке старое заменяется</p></div></div>
+  {% if intro_asset %}<div class="video-preview"><video controls preload="metadata" src="/media/{{ intro_asset.id }}/file"></video><form method="post" action="/content/modules/{{ module.id }}/video/delete"><button class="button button--danger">Удалить видео</button></form></div>{% endif %}
+  <form method="post" action="/content/modules/{{ module.id }}/video" enctype="multipart/form-data" class="form-grid form-grid--topline auto-submit-form">
+    <label>Видеофайл<input name="file" type="file" accept="video/*" required></label>
+    <button>{{ "Заменить видео" if intro_asset else "Добавить видео" }}</button>
+  </form>
+</section>
+
+<section class="editor-section card" id="cards">
+  <div class="editor-section__title"><span>03</span><div><h2>Карточки</h2><p class="muted">Все изображения отправляются пользователю одним альбомом</p></div></div>
+  <div class="card-gallery">
+    {% for card, post, asset in cards %}
+    <figure class="content-card">
+      <img src="/media/{{ asset.id }}/file" alt="Карточка {{ card.position }}">
+      <figcaption><strong>Карточка {{ card.position }}</strong><span>{{ card.caption or "Без подписи" }}</span><form method="post" action="/content/modules/{{ module.id }}/cards/{{ card.id }}/delete"><button class="button button--danger">Удалить</button></form></figcaption>
+    </figure>
+    {% else %}<div class="empty-state">Пока нет карточек. Загрузи первое изображение ниже.</div>{% endfor %}
+  </div>
+  <form method="post" action="/content/modules/{{ module.id }}/cards" enctype="multipart/form-data" class="form-grid form-grid--topline auto-submit-form">
+    <label class="form-grid__wide">Изображения<input name="files" type="file" accept="image/*" multiple required><small>Можно выбрать сразу несколько файлов. Загрузка начнётся автоматически.</small></label>
+    <button>Загрузить выбранные карточки</button>
+  </form>
+</section>
+
+<section class="editor-section card" id="practice">
+  <div class="editor-section__title"><span>04</span><div><h2>Практика</h2><p class="muted">Квиз, открытый вопрос для дневника рефлексии или опрос без правильного ответа</p></div></div>
+  <form method="post" action="/content/modules/{{ module.id }}/practice" class="form-grid">
+    <label>Тип
+      <select name="practice_type"><option value="quiz" {% if not practice or practice.practice_type.value == "quiz" %}selected{% endif %}>Квиз</option><option value="open_question" {% if practice and practice.practice_type.value == "open_question" %}selected{% endif %}>Открытый вопрос</option><option value="poll" {% if practice and practice.practice_type.value == "poll" %}selected{% endif %}>Опрос с результатами</option></select>
+    </label>
+    <label>Количество попыток<input name="max_attempts" type="number" min="1" max="10" value="{{ practice.max_attempts if practice else 2 }}"></label>
+    <label class="form-grid__wide">Вопрос<textarea name="question" required>{{ practice.question if practice else "" }}</textarea></label>
+    <label class="form-grid__wide">Варианты ответа — каждый с новой строки<textarea name="options_text" placeholder="Первый вариант&#10;Второй вариант">{% for option in options %}{{ option.text }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea></label>
+    <label>Номер правильного варианта<input name="correct_option" type="number" min="1" value="{% for option in options %}{% if option.is_correct %}{{ option.position }}{% endif %}{% endfor %}"></label>
+    <label>Подсказка после ответа<input name="explanation" value="{{ practice.explanation if practice and practice.explanation else "" }}"></label>
+    <button>Сохранить практику</button>
+  </form>
+</section>
+
+<section class="editor-section card" id="lms">
+  <div class="editor-section__title"><span>05</span><div><h2>LMS и секретный ключ</h2><p class="muted">Если у модуля есть и практика в боте, и LMS, галочка появится только после выполнения обоих условий</p></div></div>
+  <form method="post" action="/content/modules/{{ module.id }}/lms" class="form-grid">
+    <label>Название LMS-курса<input name="name" required value="{{ lms_course.name if lms_course else module.title }}"></label>
+    <label>Текст кнопки<input name="button_text" required value="{{ module_lms.button_text if module_lms else "Перейти к курсу" }}"></label>
+    <label class="form-grid__wide">Настоящая ссылка<input name="target_url" type="url" required value="{{ lms_course.target_url if lms_course else "" }}" placeholder="https://..."></label>
+    <label>Название нового ключа<input name="secret_key_label" maxlength="120" placeholder="Например: Ключ на август 2026"></label>
+    <label>Новый секретный ключ<input name="secret_key" maxlength="255" placeholder="Можно добавить или заменить позже"></label>
+    <button>Сохранить LMS и ключ</button>
+  </form>
+  {% if secret_keys %}<div class="key-list"><strong>Ключи:</strong>{% for key in secret_keys %}<span><strong>{{ key.label }}</strong> · фраза скрыта · {{ key.created_at.strftime("%d.%m.%Y") }} · {{ "активен" if key.is_active else "выключен" }}</span>{% endfor %}</div>{% endif %}
+</section>
+
+<section class="danger-zone">
+  <form method="post" action="/content/modules/{{ module.id }}/archive"><button class="button--danger">Переместить модуль в архив</button></form>
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Статистика — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Статистика</h1><p class="muted">Все показатели проекта собраны на одной странице</p></div><div class="heading-actions"><a class="button" href="/analytics/export/users.csv">Пользователи CSV</a><a class="button button--ghost" href="/analytics/export/events.csv">События CSV</a></div></div>
+<section class="metrics">
+  <article class="metric"><span>Пользователи</span><strong>{{ metrics.users }}</strong></article>
+  <article class="metric"><span>Опубликованные модули</span><strong>{{ metrics.published_modules }}</strong></article>
+  <article class="metric"><span>Открытые обращения</span><strong>{{ metrics.open_tickets }}</strong></article>
+  <article class="metric"><span>Отправленные рассылки</span><strong>{{ metrics.sent_broadcasts }}</strong></article>
+</section>
+<section class="card analytics-events"><h2>События бота</h2><div class="table-wrap"><table><thead><tr><th>Событие</th><th>Количество</th></tr></thead><tbody>
+{% for event_name, count in rows %}<tr><td>{{ event_labels.get(event_name, "Другое действие пользователя") }}</td><td>{{ count }}</td></tr>{% else %}<tr><td colspan="2">Событий пока нет</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

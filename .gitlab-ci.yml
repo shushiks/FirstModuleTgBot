@@ -1,0 +1,35 @@
+stages:
+  - quality
+  - test
+  - build
+
+default:
+  image: python:3.12-slim
+  cache:
+    paths:
+      - .cache/pip
+
+before_script:
+  - python -m pip install --cache-dir .cache/pip uv==0.11.29
+  - uv sync --frozen --extra dev
+
+quality:
+  stage: quality
+  script:
+    - uv run ruff format --check .
+    - uv run ruff check .
+    - uv run mypy src
+
+tests:
+  stage: test
+  script:
+    - uv run pytest -q
+
+docker-build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script: []
+  script:
+    - docker build -t zero-semester:$CI_COMMIT_SHA .

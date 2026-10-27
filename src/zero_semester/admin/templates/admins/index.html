@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Администраторы — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Администраторы</h1><p class="muted">Отдельные учётные записи для контента, поддержки и управления</p></div></div>
+{% if created %}<div class="alert alert--success">Учётная запись создана.</div>{% endif %}
+<section class="card grid-2 role-explainer">
+  <div><h3>Администратор</h3><p class="muted">Доступ ко всем разделам и управлению учётными записями.</p></div>
+  <div><h3>Контент-менеджер</h3><p class="muted">Контент, ключи, рассылки, пользователи и статистика. Без поддержки и администраторов.</p></div>
+  <div><h3>Поддержка</h3><p class="muted">Обращения и список пользователей. Без контента, рассылок и статистики.</p></div>
+</section>
+<section class="card"><h2>Добавить администратора</h2><form method="post" class="form-grid">
+  <label>Логин<input name="username" required minlength="3" maxlength="100"></label>
+  <label>Пароль<input name="password" type="password" required minlength="12" autocomplete="new-password"></label>
+  <label>Роль<select name="role">{% for role in roles %}<option value="{{ role.value }}">{{ {"admin":"Администратор","content_manager":"Контент-менеджер","support":"Поддержка"}[role.value] }}</option>{% endfor %}</select></label>
+  <button>Создать учётку</button>
+</form></section>
+<section class="card"><h2>Учётные записи</h2><div class="table-wrap"><table><thead><tr><th>Логин</th><th>Роль</th><th>Статус</th><th></th></tr></thead><tbody>
+{% for account in accounts %}<tr><td>{{ account.username }}</td><td>{{ {"admin":"Администратор","content_manager":"Контент-менеджер","support":"Поддержка"}[account.role.value] }}</td><td>{{ "Активна" if account.is_active else "Отключена" }}</td><td>{% if account.id != admin.id %}<form method="post" action="/admins/{{ account.id }}/toggle"><button class="button button--ghost">{{ "Отключить" if account.is_active else "Включить" }}</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

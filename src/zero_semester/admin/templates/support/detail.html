@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Обращение #{{ ticket.id }} — Нулевой семестр{% endblock %}
+{% block content %}
+<div class="page-heading"><div><a class="back-link" href="/support">← К обращениям</a><h1>Обращение #{{ ticket.id }}</h1><p class="muted">{{ user.time_login }} · {% if user.telegram_username %}<a href="https://t.me/{{ user.telegram_username }}">@{{ user.telegram_username }}</a>{% else %}Telegram ID {{ user.telegram_id }}{% endif %}</p></div><span class="badge">{{ {"new":"Новое","in_progress":"В работе","closed":"Закрыто"}[ticket.status.value] }}</span></div>
+<section class="card support-thread">{% for message in messages %}<article class="support-message support-message--{{ message.sender_type }}"><strong>{{ "Пользователь" if message.sender_type == "user" else "Поддержка" }}</strong><p>{{ message.text or "Вложение без текста" }}</p><small>{{ message.created_at }}</small></article>{% else %}<p class="muted">Сообщений нет.</p>{% endfor %}</section>
+{% if ticket.status.value != "closed" %}<section class="card"><h2>Ответить через бота</h2><form method="post" action="/support/{{ ticket.id }}/reply" class="form-stack"><textarea name="text" required maxlength="4096"></textarea><button>Отправить пользователю</button></form><form method="post" action="/support/{{ ticket.id }}/close" class="danger-zone"><button class="button--danger">Закрыть обращение</button></form></section>{% endif %}
+{% endblock %}

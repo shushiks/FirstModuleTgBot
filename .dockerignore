@@ -1,0 +1,13 @@
+.git
+.env
+.idea
+.venv
+__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+*.pyc
+media
+tests
+.DS_Store
+**/.DS_Store
